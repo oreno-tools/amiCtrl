@@ -43,7 +43,7 @@ func awsEc2Client(profile string, region string) *ec2.EC2 {
     return ec2Client
 }
 
-func output_tbl(data [][]string) {
+func outputTbl(data [][]string) {
     table := tablewriter.NewWriter(os.Stdout)
     table.SetHeader([]string{"AMI Name", "AMI ID", "State", "Snapshot ID"})
     table.SetAutoMergeCells(true)
@@ -69,7 +69,7 @@ func displayAmiInfo(ec2Client *ec2.EC2, amiId string, snapshotIds []string) {
         strings.Join(snapshotIds, "\n"),
     }
     amis = append(amis, ami)
-    output_tbl(amis)
+    outputTbl(amis)
 }
 
 func createTag(ec2Client *ec2.EC2, amiId string, name string) {
