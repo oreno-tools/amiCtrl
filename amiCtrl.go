@@ -14,6 +14,8 @@ import (
     "github.com/olekukonko/tablewriter"
 )
 
+const AppVersion = "0.0.2"
+
 var (
     argProfile = flag.String("profile", "", "Profile 名を指定.")
     argRegion = flag.String("region", "ap-northeast-1", "Region 名を指定.")
@@ -25,6 +27,7 @@ var (
     argDelete = flag.Bool("delete", false, "タグをインスタンスから削除.")
     argDescribe = flag.Bool("describe", false, "タグを詳細を確認.")
     argNoreboot = flag.Bool("noreboot", true, "No Reboot オプションを指定.")
+    argVersion = flag.Bool("version", false, "バージョンを出力.")
 )
 
 func awsEc2Client(profile string, region string) *ec2.EC2 {
@@ -40,9 +43,9 @@ func awsEc2Client(profile string, region string) *ec2.EC2 {
     return ec2Client
 }
 
-func output_tbl(data [][]string) {
+func outputTbl(data [][]string) {
     table := tablewriter.NewWriter(os.Stdout)
-    table.SetHeader([]string{"AMI Name", "AMI ID", "Snapshot ID"})
+    table.SetHeader([]string{"AMI Name", "AMI ID", "State", "Snapshot ID"})
     table.SetAutoMergeCells(true)
     table.SetRowLine(true)
 
@@ -54,16 +57,19 @@ func output_tbl(data [][]string) {
 
 func displayAmiInfo(ec2Client *ec2.EC2, amiId string, snapshotIds []string) {
     var amiName string
+    var amiState string
     amiName = getAmiName(ec2Client, amiId)
-    getAmiName(ec2Client, amiId)
+    amiState = getAmiState(ec2Client, amiId)
+    // getAmiName(ec2Client, amiId)
     amis := [][]string{}
     ami := []string{
         amiName,
         amiId,
+        amiState,
         strings.Join(snapshotIds, "\n"),
     }
     amis = append(amis, ami)
-    output_tbl(amis)
+    outputTbl(amis)
 }
 
 func createTag(ec2Client *ec2.EC2, amiId string, name string) {
@@ -169,6 +175,30 @@ func getAmiName(ec2Client *ec2.EC2, amiId string) (amiName string) {
     return amiName
 }
 
+func getAmiState(ec2Client *ec2.EC2, amiId string) (amiState string) {
+    input := &ec2.DescribeImagesInput{
+        Filters: []*ec2.Filter{
+            {
+                Name: aws.String("image-id"),
+                Values: []*string{
+                    aws.String(amiId),
+                },
+            },
+        },
+    }
+    result, err := ec2Client.DescribeImages(input)
+    if err != nil {
+        fmt.Println(err.Error())
+        os.Exit(1)
+    }
+
+    for _, i := range result.Images {
+        amiState = *i.State
+    }
+
+    return amiState
+}
+
 func getSnapshotIds(ec2Client *ec2.EC2, amiId string) (snapshotIds []string) {
     description := "Created by CreateImage(*) for " + amiId + " from *"
     input := &ec2.DescribeSnapshotsInput{
@@ -209,6 +239,11 @@ func deleteSnapshot(ec2Client *ec2.EC2, snapshotIds []string) {
 
 func main() {
     flag.Parse()
+
+    if *argVersion {
+        fmt.Println(AppVersion)
+        os.Exit(0)
+    }
 
     ec2Client := awsEc2Client(*argProfile, *argRegion)
 
