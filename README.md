@@ -6,6 +6,15 @@
 
 ## 使い方
 
+### インストール
+
+https://github.com/inokappa/amiCtrl/releases から環境に応じたバイナリをダウンロードしてください.
+
+```
+wget https://github.com/inokappa/amiCtrl/releases/download/v0.0.3/amiCtrl_darwin_amd64 ~/bin/amiCtrl
+chmod +x ~/bin/amiCtrl
+```
+
 ### ヘルプ
 
 ```sh
