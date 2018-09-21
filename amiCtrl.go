@@ -14,7 +14,7 @@ import (
     "github.com/olekukonko/tablewriter"
 )
 
-const AppVersion = "0.0.2"
+const AppVersion = "0.0.3"
 
 var (
     argProfile = flag.String("profile", "", "Profile 名を指定.")
@@ -23,9 +23,8 @@ var (
     argInstance = flag.String("instance", "", "Instance ID を指定.")
     argAmi = flag.String("ami", "", "AMI ID を指定.")
     argName = flag.String("name", "", "AMI Name を指定.")
-    argCreate = flag.Bool("create", false, "タグをインスタンスに付与.")
-    argDelete = flag.Bool("delete", false, "タグをインスタンスから削除.")
-    argDescribe = flag.Bool("describe", false, "タグを詳細を確認.")
+    argCreate = flag.Bool("create", false, "AMI を作成.")
+    argDelete = flag.Bool("delete", false, "AMI を削除.")
     argNoreboot = flag.Bool("noreboot", true, "No Reboot オプションを指定.")
     argVersion = flag.Bool("version", false, "バージョンを出力.")
 )
@@ -60,16 +59,21 @@ func displayAmiInfo(ec2Client *ec2.EC2, amiId string, snapshotIds []string) {
     var amiState string
     amiName = getAmiName(ec2Client, amiId)
     amiState = getAmiState(ec2Client, amiId)
-    // getAmiName(ec2Client, amiId)
-    amis := [][]string{}
-    ami := []string{
-        amiName,
-        amiId,
-        amiState,
-        strings.Join(snapshotIds, "\n"),
+    fmt.Println(amiState)
+    if amiState != "" {
+        amis := [][]string{}
+        ami := []string{
+            amiName,
+            amiId,
+            amiState,
+            strings.Join(snapshotIds, "\n"),
+        }
+        amis = append(amis, ami)
+        outputTbl(amis)
+    } else {
+        fmt.Println(amiId + " は存在していません.")
+        os.Exit(0)
     }
-    amis = append(amis, ami)
-    outputTbl(amis)
 }
 
 func createTag(ec2Client *ec2.EC2, amiId string, name string) {
