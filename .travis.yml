@@ -6,10 +6,11 @@ matrix:
 services:
   - docker
 before_install:
-  - docker-compose build ${TEST_TARGET}
+  - docker-compose build
   - docker-compose up -d
 install:
 before_script:
+  - docker-compose exec make depend
 script:
   - docker-compose exec make test
 after_script:
