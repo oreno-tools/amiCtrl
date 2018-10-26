@@ -1,0 +1,17 @@
+sudo: required
+matrix:
+  include:
+  - name: "Go 1.11"
+    env: TEST_TARGET=amictrl
+services:
+  - docker
+before_install:
+  - docker-compose build
+  - docker-compose up -d
+install:
+before_script:
+  - docker-compose exec amictrl make depend
+script:
+  - docker-compose exec amictrl make test
+after_script:
+notifications:

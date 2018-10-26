@@ -5,6 +5,7 @@ import (
     "fmt"
     "flag"
     "strings"
+    "encoding/json"
 
     "github.com/aws/aws-sdk-go/aws"
     "github.com/aws/aws-sdk-go/aws/session"
@@ -14,7 +15,7 @@ import (
     "github.com/olekukonko/tablewriter"
 )
 
-const AppVersion = "0.0.3"
+const AppVersion = "0.0.5"
 
 var (
     argProfile = flag.String("profile", "", "Profile 名を指定.")
@@ -27,13 +28,29 @@ var (
     argDelete = flag.Bool("delete", false, "AMI を削除.")
     argNoreboot = flag.Bool("noreboot", true, "No Reboot オプションを指定.")
     argVersion = flag.Bool("version", false, "バージョンを出力.")
+    argJson = flag.Bool("json", false, "JSON 形式で出力.")
+    argBatch = flag.Bool("batch", false, "バッチモードで実行.")
+    // argOwner = flag.String("owner", "", "AMI のオーナーを指定 (デフォルトは self).")
 )
+
+type Amis struct {
+    Amis           []Ami    `json:"amis"`
+}
+
+type Ami struct {
+    AmiName        string `json:"ami_name"`
+    AmiId          string `json:"ami_id"`
+    AmiState       string `json:"instance_type"`
+    SnapshotIds    []string `json:"snapshot_ids"`
+}
 
 func awsEc2Client(profile string, region string) *ec2.EC2 {
     var config aws.Config
     if profile != "" {
         creds := credentials.NewSharedCredentials("", profile)
-        config = aws.Config{Region: aws.String(region), Credentials: creds, Endpoint: aws.String(*argEndpoint)}
+        config = aws.Config{Region: aws.String(region),
+                            Credentials: creds,
+                            Endpoint: aws.String(*argEndpoint)}
     } else {
         config = aws.Config{Region: aws.String(region), Endpoint: aws.String(*argEndpoint)}
     }
@@ -54,25 +71,32 @@ func outputTbl(data [][]string) {
     table.Render()
 }
 
-func displayAmiInfo(ec2Client *ec2.EC2, amiId string, snapshotIds []string) {
-    var amiName string
-    var amiState string
-    amiName = getAmiName(ec2Client, amiId)
-    amiState = getAmiState(ec2Client, amiId)
-    fmt.Println(amiState)
-    if amiState != "" {
-        amis := [][]string{}
-        ami := []string{
-            amiName,
-            amiId,
-            amiState,
-            strings.Join(snapshotIds, "\n"),
-        }
-        amis = append(amis, ami)
-        outputTbl(amis)
+func outputJson(data [][]string) {
+    var rs []Ami
+    for _, record := range data {
+        snapshot_ids := strings.Split(record[3], "\n")
+        r := Ami{AmiName:record[0],
+                 AmiId:record[1],
+                 AmiState:record[2],
+                 SnapshotIds:snapshot_ids}
+        rs = append(rs, r)
+    }
+    rj := Amis{
+        Amis: rs,
+    }
+    b, err := json.Marshal(rj)
+    if err != nil {
+        fmt.Println("JSON Marshal error:", err)
+        return
+    }
+    os.Stdout.Write(b)
+}
+
+func displayAmiInfo(Amis [][]string) {
+    if *argJson {
+        outputJson(Amis)
     } else {
-        fmt.Println(amiId + " は存在していません.")
-        os.Exit(0)
+        outputTbl(Amis)
     }
 }
 
@@ -101,9 +125,56 @@ func createTag(ec2Client *ec2.EC2, amiId string, name string) {
 }
 
 func describeAmi(ec2Client *ec2.EC2, amiId string) {
-    var snapshotIds []string
-    snapshotIds = getSnapshotIds(ec2Client, amiId)
-    displayAmiInfo(ec2Client, amiId, snapshotIds)
+    input := &ec2.DescribeImagesInput{
+        Owners: []*string{
+            aws.String("self"),
+        },
+    }
+
+    if amiId != "" {
+        input.SetFilters(
+            []*ec2.Filter{
+                {
+                    Name: aws.String("image-id"),
+                    Values: []*string{
+                        aws.String(amiId),
+                    },
+                },
+            },
+        )
+    }
+
+    /*
+    if *argOwner != "" {
+        input.SetOwners(
+            []*string {
+                aws.String(*argOwner),
+            },
+        )
+    }
+    */
+
+    result, err := ec2Client.DescribeImages(input)
+    if err != nil {
+        fmt.Println(err.Error())
+        os.Exit(1)
+    }
+
+    allAmis := [][]string{}
+    for _, i := range result.Images {
+        var snapshotIds []string
+        amiId = *i.ImageId
+        snapshotIds = getSnapshotIds(ec2Client, amiId)
+        Ami := []string{
+            *i.Name,
+            amiId,
+            *i.State,
+            strings.Join(snapshotIds, "\n"),
+        }
+        allAmis = append(allAmis, Ami)
+    }
+
+    displayAmiInfo(allAmis)
 }
 
 func createAmi(ec2Client *ec2.EC2, instanceId string, name string, noReboot bool) {
@@ -118,24 +189,39 @@ func createAmi(ec2Client *ec2.EC2, instanceId string, name string, noReboot bool
         fmt.Println(err.Error())
         os.Exit(1)
     }
-    // fmt.Println(*res.ImageId)
     createTag(ec2Client, *res.ImageId, name)
-
-    var snapshotIds []string
-    snapshotIds = getSnapshotIds(ec2Client, *res.ImageId)
-    displayAmiInfo(ec2Client, *res.ImageId, snapshotIds)
+    describeAmi(ec2Client, *res.ImageId)
 }
 
 func deleteAmi(ec2Client *ec2.EC2, amiId string) {
     var snapshotIds []string
     snapshotIds = getSnapshotIds(ec2Client, amiId)
-    displayAmiInfo(ec2Client, amiId, snapshotIds)
-    fmt.Print("上記の AMI を削除しますか?(y/n): ")
-    var stdin string
-    fmt.Scan(&stdin)
-    switch stdin {
-    case "y", "Y":
-        fmt.Println("AMI を削除します...")
+    if ! *argBatch {
+        describeAmi(ec2Client, amiId)
+        fmt.Print("上記の AMI を削除しますか?(y/n): ")
+        var stdin string
+        fmt.Scan(&stdin)
+        switch stdin {
+        case "y", "Y":
+            fmt.Println("AMI を削除します...")
+            input := &ec2.DeregisterImageInput{
+                ImageId: aws.String(amiId),
+            }
+            _, err := ec2Client.DeregisterImage(input)
+            if err != nil {
+                fmt.Println(err.Error())
+                os.Exit(1)
+            }
+            deleteSnapshot(ec2Client, snapshotIds)
+            fmt.Println("AMI を削除しました.")
+        case "n", "N":
+            fmt.Println("処理を停止します.")
+            os.Exit(0)
+        default:
+            fmt.Println("処理を停止します.")
+            os.Exit(0)
+        }
+    } else {
         input := &ec2.DeregisterImageInput{
             ImageId: aws.String(amiId),
         }
@@ -146,61 +232,7 @@ func deleteAmi(ec2Client *ec2.EC2, amiId string) {
         }
         deleteSnapshot(ec2Client, snapshotIds)
         fmt.Println("AMI を削除しました.")
-    case "n", "N":
-        fmt.Println("処理を停止します.")
-        os.Exit(0)
-    default:
-        fmt.Println("処理を停止します.")
-        os.Exit(0)
     }
-}
-
-func getAmiName(ec2Client *ec2.EC2, amiId string) (amiName string) {
-    input := &ec2.DescribeImagesInput{
-        Filters: []*ec2.Filter{
-            {
-                Name: aws.String("image-id"),
-                Values: []*string{
-                    aws.String(amiId),
-                },
-            },
-        },
-    }
-    result, err := ec2Client.DescribeImages(input)
-    if err != nil {
-        fmt.Println(err.Error())
-        os.Exit(1)
-    }
-
-    for _, i := range result.Images {
-        amiName = *i.Name
-    }
-
-    return amiName
-}
-
-func getAmiState(ec2Client *ec2.EC2, amiId string) (amiState string) {
-    input := &ec2.DescribeImagesInput{
-        Filters: []*ec2.Filter{
-            {
-                Name: aws.String("image-id"),
-                Values: []*string{
-                    aws.String(amiId),
-                },
-            },
-        },
-    }
-    result, err := ec2Client.DescribeImages(input)
-    if err != nil {
-        fmt.Println(err.Error())
-        os.Exit(1)
-    }
-
-    for _, i := range result.Images {
-        amiState = *i.State
-    }
-
-    return amiState
 }
 
 func getSnapshotIds(ec2Client *ec2.EC2, amiId string) (snapshotIds []string) {
@@ -264,10 +296,7 @@ func main() {
         }
         deleteAmi(ec2Client, *argAmi)
     } else {
-        if *argAmi == "" {
-           fmt.Println("`-ami` オプションを指定して下さい.")
-            os.Exit(1)
-        }
         describeAmi(ec2Client, *argAmi)
+        os.Exit(0)
     }
 }
