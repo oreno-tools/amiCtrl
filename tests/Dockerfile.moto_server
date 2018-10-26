@@ -1,0 +1,8 @@
+FROM python:latest
+RUN pip install moto[server]
+RUN pip install awscli
+RUN mkdir /root/.aws
+RUN printf "[dummy_profile]\n\
+aws_access_key_id = AKxxxxxxxxxxxxxxxxxx\n\
+aws_secret_access_key = zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\n\
+region = ap-northeast-1" >> /root/.aws/credentials

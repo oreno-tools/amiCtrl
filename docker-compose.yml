@@ -1,0 +1,32 @@
+version: '3'
+services:
+  moto_server:
+    build:
+      context: ./tests
+      dockerfile: Dockerfile.moto_server
+    container_name: moto-server
+    command: ["moto_server", "ec2", "-H", "0.0.0.0", "-p", "5000"]
+    ports:
+      - "5000:5000"
+    networks:
+      amictrl_test_net:
+        ipv4_address: 192.168.0.100
+  amictrl:
+    build:
+      context: ./tests
+      dockerfile: Dockerfile.golang
+    container_name: amictrl
+    volumes:
+      - .:/go/src/amiCtrl
+    working_dir: /go/src/amiCtrl
+    command: tail -f /dev/null
+    networks:
+      amictrl_test_net:
+        ipv4_address: 192.168.0.2
+networks:
+  amictrl_test_net:
+    driver: bridge
+    ipam:
+     driver: default
+     config:
+       - subnet: 192.168.0.0/24

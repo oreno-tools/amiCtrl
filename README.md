@@ -1,5 +1,5 @@
 # amiCtrl
-
+[![Build Status](https://travis-ci.org/inokappa/amiCtrl.svg?branch=master)](https://travis-ci.org/inokappa/amiCtrl)
 ## これなに
 
 - AMI の作成、削除、詳細を確認出来るワンバイナリツールです
