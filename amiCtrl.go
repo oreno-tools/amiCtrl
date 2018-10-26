@@ -28,8 +28,9 @@ var (
     argDelete = flag.Bool("delete", false, "AMI を削除.")
     argNoreboot = flag.Bool("noreboot", true, "No Reboot オプションを指定.")
     argVersion = flag.Bool("version", false, "バージョンを出力.")
-    argJson = flag.Bool("json", false, "JSON 形式で出力する.")
-    argBatch = flag.Bool("batch", false, "バッチモードで実行する.")
+    argJson = flag.Bool("json", false, "JSON 形式で出力.")
+    argBatch = flag.Bool("batch", false, "バッチモードで実行.")
+    // argOwner = flag.String("owner", "", "AMI のオーナーを指定 (デフォルトは self).")
 )
 
 type Amis struct {
@@ -142,6 +143,16 @@ func describeAmi(ec2Client *ec2.EC2, amiId string) {
             },
         )
     }
+
+    /*
+    if *argOwner != "" {
+        input.SetOwners(
+            []*string {
+                aws.String(*argOwner),
+            },
+        )
+    }
+    */
 
     result, err := ec2Client.DescribeImages(input)
     if err != nil {

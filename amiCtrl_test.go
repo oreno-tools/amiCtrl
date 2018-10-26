@@ -112,17 +112,15 @@ func TestStdoutState(t *testing.T) {
     }
 }
 
-/*
-func TestConvertDate(t *testing.T) {
-    str := "2018-09-28 22:52:24 +0000 UTC"
-    layout := "2006-01-02 15:04:05 +0000 UTC"
-    tm, _ := time.Parse(layout, str)
+func TestStdoutJson(t *testing.T) {
+    cmd := exec.Command("sh", "tests/test_stdout_json.sh")
+    stdout := new(bytes.Buffer)
+    cmd.Stdout = stdout
+    output := "test-image77777"
 
-    actual := convertDate(tm)
-    expected := "2018-09-29 07:52:24"
+    _ = cmd.Run()
 
-    if actual != expected {
+    if ! strings.Contains(stdout.String(), output) {
         t.Fatal("Failed Test")
     }
 }
-*/

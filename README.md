@@ -11,7 +11,7 @@
 https://github.com/inokappa/amiCtrl/releases から環境に応じたバイナリをダウンロードしてください.
 
 ```
-wget https://github.com/inokappa/amiCtrl/releases/download/v0.0.3/amiCtrl_darwin_amd64 ~/bin/amiCtrl
+wget https://github.com/inokappa/amiCtrl/releases/download/v0.0.5/amiCtrl_darwin_amd64 ~/bin/amiCtrl
 chmod +x ~/bin/amiCtrl
 ```
 
@@ -22,6 +22,8 @@ $ ./amiCtrl -h
 Usage of ./amiCtrl:
   -ami string
         AMI ID を指定.
+  -batch
+        バッチモードで実行.
   -create
         AMI を作成.
   -delete
@@ -30,6 +32,8 @@ Usage of ./amiCtrl:
         AWS API のエンドポイントを指定.
   -instance string
         Instance ID を指定.
+  -json
+        JSON 形式で出力.
   -name string
         AMI Name を指定.
   -noreboot
@@ -63,6 +67,27 @@ $ ./amiCtrl -ami=ami-1234567x
 | suzuki-ami-desu | ami-00385acd | available | snap-0c1cf6 |
 +-----------------+--------------+-----------+-------------+
 ```
+
+`-ami` オプションを指定しない場合, 自アカウントに登録されている AMI 全てを出力します.
+
+また, `-json` をオプションを付与すると, JSON 形式で AMI の情報を取得します.
+
+```sh
+$ ./amiCtrl -ami=ami-1234567x -json | jq .
+{
+  "amis": [
+    {
+      "ami_name": "suzuki-ami",
+      "ami_id": "ami-00385acd",
+      "instance_type": "available",
+      "snapshot_ids": [
+        "snap-07865e9992ce1b6cf"
+      ]
+    }
+  ]
+}
+```
+
 
 ### AMI 削除
 
