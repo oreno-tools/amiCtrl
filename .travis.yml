@@ -2,7 +2,7 @@ sudo: required
 matrix:
   include:
   - name: "Go 1.11"
-    env: TEST_TARGET=go-111
+    env: TEST_TARGET=amictrl
 services:
   - docker
 before_install:
@@ -10,8 +10,8 @@ before_install:
   - docker-compose up -d
 install:
 before_script:
-  - docker-compose exec make depend
+  - docker-compose exec amictrl make depend
 script:
-  - docker-compose exec make test
+  - docker-compose exec amictrl make test
 after_script:
 notifications:
