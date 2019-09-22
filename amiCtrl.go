@@ -154,7 +154,6 @@ func describeAmi(ec2Client *ec2.EC2, amiId string) (allAmis [][]string) {
 		os.Exit(1)
 	}
 
-	// allAmis := [][]string{}
 	for _, i := range result.Images {
 		var snapshotIds []string
 		amiId = *i.ImageId
@@ -170,7 +169,6 @@ func describeAmi(ec2Client *ec2.EC2, amiId string) (allAmis [][]string) {
 	}
 
 	return allAmis
-	// displayAmiInfo(allAmis)
 }
 
 func filterSnapshotIds(blockDeviceMappings []*ec2.BlockDeviceMapping) (snapshotIds []string) {
@@ -268,9 +266,14 @@ func deleteByDays(ec2Client *ec2.EC2, prefix string, days int) {
 	allAmis := describeAmi(ec2Client, "")
 
 	var filterdAmis [][]string
-	filterdAmis = filterAmisByPrefix(allAmis, prefix)
-	filterdAmis = filterAmisByDate(filterdAmis, days)
 
+	filterdAmis = filterAmisByPrefix(allAmis, prefix)
+	if len(filterdAmis) == 0 {
+		fmt.Println("削除対象の AMI はありません.")
+		os.Exit(0)
+	}
+
+	filterdAmis = filterAmisByDate(filterdAmis, days)
 	if len(filterdAmis) == 0 {
 		fmt.Println("削除対象の AMI はありません.")
 		os.Exit(0)
@@ -286,22 +289,6 @@ func deleteByAmiId(ec2Client *ec2.EC2, amiId string) {
 		os.Exit(0)
 	}
 	deleteAmis(ec2Client, allAmis)
-}
-
-func getSnapshotIds(ec2Client *ec2.EC2) (snapshots [][]string) {
-	input := &ec2.DescribeSnapshotsInput{}
-	result, err := ec2Client.DescribeSnapshots(input)
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-
-	for _, s := range result.Snapshots {
-		snapshot := []string{*s.SnapshotId, *s.Description}
-		snapshots = append(snapshots, snapshot)
-	}
-
-	return snapshots
 }
 
 func deleteSnapshot(ec2Client *ec2.EC2, snapshotIds string) {
