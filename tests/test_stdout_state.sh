@@ -7,11 +7,11 @@ INSTANCE_ID=$(aws --profile=dummy_profile --region=us-east-1 --endpoint=http://1
       --security-groups=MySecurityGroup \
       --query=Instances[].InstanceId --output=text)
 
-AMI_ID=$(gom run amiCtrl.go -profile=dummy_profile -region=us-east-1 -endpoint=http://192.168.0.100:5000 \
+AMI_ID=$(go run amiCtrl.go -profile=dummy_profile -region=us-east-1 -endpoint=http://192.168.0.100:5000 \
   -create -instance=$(echo ${INSTANCE_ID} | tr -d \\r) \
   -name=test-image88888 \
   -json \
   | jq -r '.amis[]|.ami_id' 2> /dev/null | tail -1)
 
-gom run amiCtrl.go -profile=dummy_profile -region=us-east-1 -endpoint=http://192.168.0.100:5000 \
+go run amiCtrl.go -profile=dummy_profile -region=us-east-1 -endpoint=http://192.168.0.100:5000 \
   -ami=$(echo ${AMI_ID} | tr -d \\r)

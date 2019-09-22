@@ -12,7 +12,7 @@ AMI_ID=$(aws --profile=dummy_profile --region=us-east-1 --endpoint=http://192.16
     --instance-id=$(echo ${INSTANCE_ID} | tr -d \\r) \
     --name=test-image --output=text)
 
-gom run amiCtrl.go -profile=dummy_profile -region=us-east-1 -endpoint=http://192.168.0.100:5000 \
+go run amiCtrl.go -profile=dummy_profile -region=us-east-1 -endpoint=http://192.168.0.100:5000 \
   -delete \
   -ami=$(echo ${AMI_ID} | tr -d \\r) \
   -batch
