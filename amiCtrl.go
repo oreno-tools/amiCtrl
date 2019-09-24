@@ -220,6 +220,7 @@ func createAmi(ec2Client *ec2.EC2, instanceId string, name string, noReboot bool
 
 func deleteAmis(ec2Client *ec2.EC2, filterdAmis [][]string) {
 	if !*argBatch {
+		// fmt.Println(filterdAmis)
 		displayAmiInfo(filterdAmis)
 		fmt.Print("上記の AMI を削除しますか?(y/n): ")
 		var stdin string
@@ -278,7 +279,9 @@ func deleteByDays(ec2Client *ec2.EC2, prefix string, days int) {
 		fmt.Println("削除対象の AMI はありません.")
 		os.Exit(0)
 	}
-	deleteAmis(ec2Client, allAmis)
+	// fmt.Println(filterdAmis)
+
+	deleteAmis(ec2Client, filterdAmis)
 }
 
 func deleteByAmiId(ec2Client *ec2.EC2, amiId string) {
