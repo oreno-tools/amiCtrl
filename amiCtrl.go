@@ -4,19 +4,19 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"os"
-	"strings"
-	"time"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"os"
+	"sort"
+	"strings"
+	"time"
 
 	"github.com/olekukonko/tablewriter"
 )
 
-const AppVersion = "0.1.1"
+const AppVersion = "0.1.2"
 
 var (
 	argProfile  = flag.String("profile", "", "Profile 名を指定.")
@@ -26,13 +26,14 @@ var (
 	argAmi      = flag.String("ami", "", "AMI ID を指定.")
 	argName     = flag.String("name", "", "AMI Name を指定.")
 	argPrefix   = flag.String("prefix", "", "AMI Name の Prefix を指定.")
-	argDays     = flag.Int("days", 0, "日数を指定.")
+	argDays     = flag.Int("days", 0, "日数を指定. (要: --prefix オプションと併用)")
 	argCreate   = flag.Bool("create", false, "AMI を作成.")
 	argDelete   = flag.Bool("delete", false, "AMI を削除.")
 	argNoreboot = flag.Bool("noreboot", true, "No Reboot オプションを指定.")
 	argVersion  = flag.Bool("version", false, "バージョンを出力.")
 	argJson     = flag.Bool("json", false, "JSON 形式で出力.")
 	argBatch    = flag.Bool("batch", false, "バッチモードで実行.")
+	argLatest   = flag.Bool("latest", false, "最新の AMI を取得 (要: --prefix オプションと併用)")
 	// argOwner = flag.String("owner", "", "AMI のオーナーを指定 (デフォルトは self).")
 )
 
@@ -201,6 +202,14 @@ func filterAmisByDate(amis [][]string, days int) (fliterdAmis [][]string) {
 	return fliterdAmis
 }
 
+func filterAmisByLatest(amis [][]string) (fliterdAmis [][]string) {
+	sort.Slice(amis, func(i, j int) bool { return amis[i][3] < amis[j][3] })
+	var filterdAmis [][]string
+	filterdAmis = append(filterdAmis, amis[len(amis)-1])
+
+	return filterdAmis
+}
+
 func createAmi(ec2Client *ec2.EC2, instanceId string, name string, noReboot bool) {
 	input := &ec2.CreateImageInput{
 		InstanceId:  aws.String(instanceId),
@@ -337,6 +346,9 @@ func main() {
 		allAmis = describeAmi(ec2Client, *argAmi)
 		if *argPrefix != "" {
 			allAmis = filterAmisByPrefix(allAmis, *argPrefix)
+			if *argLatest {
+				allAmis = filterAmisByLatest(allAmis)
+			}
 		}
 		displayAmiInfo(allAmis)
 		os.Exit(0)
