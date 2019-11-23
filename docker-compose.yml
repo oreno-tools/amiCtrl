@@ -29,6 +29,7 @@ services:
       dockerfile: ./tests/Dockerfile.golang
     container_name: amictrl-circleci
     working_dir: /go/src/amiCtrl
+    command: tail -f /dev/null
     networks:
       amictrl_test_net:
         ipv4_address: 192.168.0.3
