@@ -11,4 +11,4 @@ build: ## バイナリをビルドする
 	@./build.sh amiCtrl.go
 
 release: ## バイナリをリリースする. 引数に `_VER=バージョン番号` を指定する.
-	@ghr -u inokappa -r amiCtrl v${_VER} ./pkg/
+	@ghr -u oreno-tools -r amiCtrl v${_VER} ./pkg/
