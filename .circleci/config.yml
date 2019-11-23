@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.9
+      - image: docker:19.03.5-git
     steps:
       - checkout
       - setup_remote_docker
@@ -16,11 +16,11 @@ jobs:
           name: Run Test Environment
           command: |
             docker-compose up -d
-      - run: 
-          name: Copy Source Files 
+      - run:
+          name: Run Install Dependencies
           command: |
-            docker cp ./amiCtrl amictrl:/go/src/amiCtrl
+            docker-compose exec amictrl_circleci make ensure
       - run:
           name: Run Test
           command: |
-            docker-compose exec -T amictrl make test
+            docker-compose exec amictrl_circleci make test

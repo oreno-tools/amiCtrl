@@ -4,6 +4,9 @@ default: ## ヘルプを表示する
 depend: ## 依存パッケージの導入
 	@dep init
 
+ensure: ## 依存パッケージの導入
+	@dep ensure
+
 test: ## test テストの実行
 	@go test -v
 

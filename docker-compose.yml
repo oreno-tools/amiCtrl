@@ -11,11 +11,11 @@ services:
     networks:
       amictrl_test_net:
         ipv4_address: 192.168.0.100
-  amictrl:
+  amictrl_local:
     build:
       context: ./tests
       dockerfile: Dockerfile.golang
-    container_name: amictrl
+    container_name: amictrl-local
     volumes:
       - .:/go/src/amiCtrl
     working_dir: /go/src/amiCtrl
@@ -23,6 +23,17 @@ services:
     networks:
       amictrl_test_net:
         ipv4_address: 192.168.0.2
+  amictrl_circleci:
+    build:
+      context: ./tests
+      dockerfile: Dockerfile.golang
+    container_name: amictrl-circleci
+    working_dir: /go/src/amiCtrl
+    command: tail -f /dev/null
+    networks:
+      amictrl_test_net:
+        ipv4_address: 192.168.0.3
+
 networks:
   amictrl_test_net:
     driver: bridge
