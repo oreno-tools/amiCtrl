@@ -13,8 +13,8 @@ services:
         ipv4_address: 192.168.0.100
   amictrl_local:
     build:
-      context: ./tests
-      dockerfile: Dockerfile.golang
+      context: ./
+      dockerfile: ./tests/Dockerfile.golang
     container_name: amictrl-local
     volumes:
       - .:/go/src/amiCtrl
@@ -25,8 +25,8 @@ services:
         ipv4_address: 192.168.0.2
   amictrl_circleci:
     build:
-      context: ./tests
-      dockerfile: Dockerfile.golang
+      context: ./
+      dockerfile: ./tests/Dockerfile.golang
     container_name: amictrl-circleci
     working_dir: /go/src/amiCtrl
     command: tail -f /dev/null
