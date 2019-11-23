@@ -208,8 +208,6 @@ func filterAmisByDate(amis [][]string, days int) (fliterdAmis [][]string) {
 
 func sortByCreation(amis [][]string) (sortedAmis [][]string) {
 	sort.Slice(amis, func(i, j int) bool { return amis[i][3] < amis[j][3] })
-	// var sortedAmis [][]string
-	// sortedAmis = append(sortedAmis, amis[len(amis)-1])
 	sortedAmis = amis
 
 	return sortedAmis

@@ -1,5 +1,5 @@
 # amiCtrl
-[![Build Status](https://travis-ci.org/inokappa/amiCtrl.svg?branch=master)](https://travis-ci.org/inokappa/amiCtrl)
+[![CircleCI](https://circleci.com/gh/oreno-tools/amiCtrl.svg?style=svg)](https://circleci.com/gh/oreno-tools/amiCtrl)
 ## これなに
 
 - AMI の作成、削除、詳細を確認出来るワンバイナリツールです
@@ -26,6 +26,8 @@ Usage of ./amiCtrl:
         バッチモードで実行.
   -create
         AMI を作成.
+  -days int
+        日数を指定. (要: --prefix オプションと併用)
   -delete
         AMI を削除.
   -endpoint string
@@ -34,14 +36,20 @@ Usage of ./amiCtrl:
         Instance ID を指定.
   -json
         JSON 形式で出力.
+  -latest
+        最新の AMI を取得 (要: --prefix オプションと併用)
   -name string
         AMI Name を指定.
   -noreboot
         No Reboot オプションを指定. (default true)
+  -prefix string
+        AMI Name の Prefix を指定.
   -profile string
         Profile 名を指定.
   -region string
         Region 名を指定. (default "ap-northeast-1")
+  -sort-by-creation
+        作成日順にソートして出力.
   -version
         バージョンを出力.
 ```
