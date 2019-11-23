@@ -1,6 +1,7 @@
 FROM golang:alpine
 RUN apk update && apk add git make bash gcc libc-dev python py2-pip jq dep && pip install awscli
-RUN mkdir /root/.aws && mkdir /go/src/amiCtrl && cp -rfp ./* /go/src/amiCtrl/ 
+RUN mkdir /root/.aws && mkdir /go/src/amiCtrl
+ADD ./* /go/src/amiCtrl/ 
 RUN printf "[dummy_profile]\n\
 aws_access_key_id = AKxxxxxxxxxxxxxxxxxx\n\
 aws_secret_access_key = zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\n\
